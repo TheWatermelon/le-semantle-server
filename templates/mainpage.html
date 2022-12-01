@@ -5,6 +5,80 @@
 {{ super() }}
 	<style>
 		body { background: #e8f1f9; }
+
+        .meter { 
+            height: 18px;
+            position: relative;
+            background: #f3efe6;
+            overflow: hidden;
+            border-radius: 5px;
+        }
+
+        .meter span {
+            display: block;
+            height: 100%;
+        }
+
+        .progress {
+            background-color: #e4c465;
+            text-align: center;
+        }
+
+        .progress-active {
+            background-color: #e4c465;
+            -webkit-animation: progressBar 3s ease-in-out;
+            -webkit-animation-fill-mode:both; 
+            -moz-animation: progressBar 3s ease-in-out;
+            -moz-animation-fill-mode:both; 
+        }
+
+        .reveal {
+            animation: fadeIn 3s;
+        }
+
+        .expand-line {
+            animation: expandLine 3s;
+        }
+
+        @-webkit-keyframes progressBar {
+        0% { width: 0; }
+        100% { width: 100%; }
+        }
+
+        @-moz-keyframes progressBar {
+        0% { width: 0; }
+        100% { width: 100%; }
+        }
+
+        @-webkit-keyframes fadeIn {
+        0% { opacity: 0; }
+        99% { opacity: 0; }
+        100% { opacity: 100%; }
+        }
+
+        @-moz-keyframes fadeIn {
+        0% { opacity: 0; }
+        99% { opacity: 0; }
+        100% { opacity: 100%; }
+        }
+
+        @-webkit-keyframes expandLine {
+        0% { display: none; }
+        99% { display: none; }
+        100% { display: table-row; }
+        }
+
+        @keyframes expandLine {
+        0% { display: none; }
+        99% { display: none; }
+        100% { display: table-row; }
+        }
+
+        @-moz-keyframes expandLine {
+        0% { display: none; }
+        99% { display: none; }
+        100% { display: table-row; }
+        }
 	</style>
 {% endblock %}
 
@@ -20,34 +94,116 @@ Devine le mot
   <div class="row">
     <div class="col-md-10 col-lg-8 mx-lg-auto mx-md-auto">
 
-        <h1 class="pt-5 pb-2">Trouve le mot !</h1>
+        <h1 class="pt-5 pb-2">Devine le mot !</h1>
 
-        <p class="lead">La liste des mots déjà trouvés s'affiche sous le champ</p>
+        <p class="lead">TO-DO développement</p>
+        <ul>
+            <li>Afficher le message d'erreur si le mot est inconnu</li>
+            <li>Avoir de l'aide à plusieurs niveaux (/nearby)</li>
+            <li>Afficher l'historique du jeu (/history, /stats)</li>
+            <li>Mettre le formulaire en une ligne</li>
+            <li>Réorganiser l'affichage des colonnes du tableau</li>
+            <li>Pouvoir relancer une partie une fois le mot trouvé (/new)</li>
+        </ul>
 
         {{ wtf.quick_form(form) }}
+        {{ error_msg }}
 
-        {% if words %}
+    {% if words %}
         <table class="table">
             <thead>
                 <tr>
                     <th scope="col">Mot</th>
-                    <th scope="col">Percentile</th>
-                    <th scope="col">Score</th>
+                    <th scope="col">°C</th>
+                    <th scope="col">🌡</th>
+                    <th scope="col">‰</th>
+                    <th scope="col">Progression</th>
                 </tr>
             </thead>
-            {% for word in words %}
-            <tr>
-                {% for key1,value  in word.items() %}
-                    {% if key1 == "word" or key1 == "percentile" %}
-                    <td>{{ value }}</td>
-                    {% elif key1 == "score" %}
-                    <td>{{ '%0.3f'|format(value|float) }}</td>
-                    {% endif %}
-                {% endfor %}
+            {% if current is iterable %}
+            <tr style="font-weight: bold">
+                <td>{{ current["word"] }}</td>
+                <td class="reveal">{{ '%0.2f'|format(current["score"]*100|float) }}</td>
+                {% if current["percentile"] == 1000 %}
+                <td class="reveal">🥳</td>
+                {% elif current["percentile"] > 998 %}
+                <td class="reveal">😱</td>
+                {% elif current["percentile"] > 989 %}
+                <td class="reveal">🔥</td>
+                {% elif current["percentile"] > 899 %}
+                <td class="reveal">🥵</td>
+                {% elif current["percentile"] > 0 %}
+                <td class="reveal">😎</td>
+                {% elif current["score"] > 0 %}
+                <td class="reveal">🥶</td>
+                {% else %}
+                <td class="reveal">🧊</td>
+                {% endif %}
+                <td class="reveal">{{ current["percentile"] }}</td>
+                {% if current["percentile"] > 0 %}
+                <td>
+                    <div class="meter">
+                        <span style="width:{{ current['percentile']/10 }}%;">
+                            <span class="progress-active"></span>
+                        </span>
+                    </div>                    
+                </td>
+                {% else %}
+                <td></td>
+                {% endif %}
             </tr>
-            {% endfor %}
+            <tr><td colspan="6"></td></tr>
+            {% endif %}
+        {% for word in words %}
+            {% if current["word"] == word["word"] %}
+                {% set style_bold = "style=font-weight:bold;" %}
+                {% set expand_line = "expand-line" %}
+            {% endif %}
+
+            {% if word["percentile"] == 1000 %}
+            <tr class="bg-success {{ expand_line }}" {{ style_bold }}>
+            {% elif word["percentile"] > 998 %}
+            <tr class="bg-info {{ expand_line }}" {{ style_bold }}>
+            {% elif word["percentile"] > 899 %}
+            <tr class="bg-danger {{ expand_line }}" {{ style_bold }}>
+            {% elif word["percentile"] > 0 %}
+            <tr class="bg-warning {{ expand_line }}" {{ style_bold }}>
+            {% else %}
+            <tr class="{{ expand_line }}" {{ style_bold }}>
+            {% endif %}
+                <td>{{ word["word"] }}</td>
+                <td>{{ '%0.2f'|format(word["score"]*100|float) }}</td>
+                {% if word["percentile"] == 1000 %}
+                <td>🥳</td>
+                {% elif word["percentile"] > 998 %}
+                <td>😱</td>
+                {% elif word["percentile"] > 989 %}
+                <td>🔥</td>
+                {% elif word["percentile"] > 899 %}
+                <td>🥵</td>
+                {% elif word["percentile"] > 0 %}
+                <td>😎</td>
+                {% elif word["score"] > 0 %}
+                <td>🥶</td>
+                {% else %}
+                <td>🧊</td>
+                {% endif %}
+                <td>{{ word["percentile"] }}</td>
+                {% if word["percentile"] > 0 %}
+                <td>
+                    <div class="meter">
+                        <span style="width:{{ word['percentile']/10 }}%;">
+                            <span class="progress">{%if word["percentile"] == 1000 %}BINGO !{% endif %}</span>
+                        </span>
+                    </div>                    
+                </td>
+                {% else %}
+                <td></td>
+                {% endif %}
+            </tr>
+        {% endfor %}
         </table>
-        {% endif %}
+    {% endif %}
     </div>
   </div>
 </div>

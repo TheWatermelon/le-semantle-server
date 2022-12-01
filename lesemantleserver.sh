@@ -12,7 +12,7 @@ then
     export FLASK_DEBUG=1
     export FLASK_APP=lesemantleserver
 
-    flask run
+    flask run --host=0.0.0.0
 else # prod
     #gunicorn -b 0.0.0.0:$PORT lesemantleserver:app
     echo "Le mode production n'est pas disponible"

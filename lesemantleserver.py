@@ -56,8 +56,8 @@ def convert_namedtuple_to_dict(nt):
 
 
 class WordForm(FlaskForm):
-    word = StringField('Mot à tester: ', validators=[DataRequired()], render_kw={'autofocus': True})
-    submit = SubmitField('Go')
+    word = StringField('', validators=[DataRequired()], render_kw={'autofocus': True, 'style': 'width:200px;'})
+    submit = SubmitField('Envoyer', render_kw={})
 
 
 def getScoreFrom(elem):
@@ -107,7 +107,8 @@ def new_game():
 @app.route("/", methods=['GET', 'POST'])
 def main_page():
     form = WordForm(request.form)
-    
+    error_msg = None
+    word_score = None
     words = []
     if request.cookies.get('words') is not None:
         words_string = request.cookies.get('words')
@@ -125,7 +126,10 @@ def main_page():
         resp.headers['location'] = url_for('main_page')
         return resp, 302
         
-    words.sort(key=getScoreFrom, reverse=True)
-    resp = render_template('mainpage.html', form=form, words=words)
+    if words:
+        word_score = words[len(words)-1]
+        words.sort(key=getScoreFrom, reverse=True)
+
+    resp = render_template('mainpage.html', form=form, words=words, current=word_score, msg=error_msg)
     
     return resp
