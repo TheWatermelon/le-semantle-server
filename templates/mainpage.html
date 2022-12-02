@@ -92,14 +92,15 @@ Devine le mot
 
             <h3>TO-DO développement</h3>
             <ul>
-                <li>Afficher le message d'erreur si le mot est inconnu</li>
+                <li>BUG: cookie trop gros à partir de 38 mots</li>
+                <li>BUG: ancien mot avec nouvel index</li>
+                <li>Ne pas afficher le premier de la liste si c'est le current</li>
                 <li>Lien pour voir de l'aide (/nearby)</li>
                 <li>Afficher l'historique du jeu (/history, /stats)</li>
-                <li>Lien pour relancer une partie (/new)</li>
-                <li>BUG: récupérer current depuis les cookies plutôt que le dernier de la liste</li>
             </ul>
         </div>
     </div>
+    {% if msg %}<p class="lead" style="padding:inherit;width:fit-content;border-radius:3px;border:1px solid black;">{{ msg|safe }}</p>{% endif %}
     <div class="row">
         <form action="" method="post" role="form" class="form" style="width: 500px;">
             <table class="table">
@@ -107,33 +108,40 @@ Devine le mot
                     <td>
                         {{ form.hidden_tag() }}
                         {{ form.word.label(class_="sr-only") }}
-                        {% if current is iterable %}
+                        {% if words and words[0]["percentile"] == 1000 %}
+                            {{ form.word(placeholder_=current["word"],readonly_=True) }}
+                        {% elif words %}
                             {{ form.word(placeholder_=current["word"]) }}
                         {% else %}
                             {{ form.word }}
                         {% endif %}
                     </td>
                     <td>
-                        {{ form.submit }}
+                        {% if words and words[0]["percentile"] == 1000 %}
+                            {{ form.submit(disabled_=True) }}
+                        {% else %}
+                            {{ form.submit }}
+                        {% endif %}
                     </td>
                 </tr>
             </table>
         </form>
     </div>
-    {{ current }}
     <div class="row">     
         <div class="col" style="padding-left: 10px; width: 500px;">
         {% if words %}
             <table class="table">
                 <colgroup>
+                    <col span="1" style="width: 2%">
                     <col span="1" style="width: 80%;">
-                    <col span="1" style="width: 3%;">
-                    <col span="1" style="width: 3%;">
-                    <col span="1" style="width: 3%;">
-                    <col span="1" style="width: 11%;">
+                    <col span="1" style="width: 2%;">
+                    <col span="1" style="width: 2%;">
+                    <col span="1" style="width: 2%;">
+                    <col span="1" style="width: 12%;">
                 </colgroup>
                 <thead>
                     <tr>
+                        <th scope="col">N°</th>
                         <th scope="col">Mot</th>
                         <th scope="col">°C</th>
                         <th scope="col">🌡</th>
@@ -141,8 +149,9 @@ Devine le mot
                         <th scope="col">Progression</th>
                     </tr>
                 </thead>
-            {% if current is iterable %}
+            {% if current is iterable and "error" not in current %}
                 <tr style="font-weight: bold">
+                    <td>{{ current["num"] }}</td>
                     <td>{{ current["word"] }}</td>
                 {% if current["percentile"] > 0 %}
                     <td class="reveal">{{ '%0.2f'|format(current["score"]*100|float) }}</td>
@@ -177,7 +186,7 @@ Devine le mot
                 {% endif %}
                 </tr>
                 <tr><td colspan="6"></td></tr>
-                {% endif %}
+            {% endif %}
             {% for word in words %}
                 {% if current["word"] == word["word"] %}
                     {% set style_bold = "style=font-weight:bold;" %}
@@ -197,6 +206,7 @@ Devine le mot
                 {% else %}
                 <tr class="{{ expand_line }}" {{ style_bold }}>
                 {% endif %}
+                    <td>{{ word["num"] }}</td>
                     <td>{{ word["word"] }}</td>
                     <td>{{ '%0.2f'|format(word["score"]*100|float) }}</td>
                     {% if word["percentile"] == 1000 %}

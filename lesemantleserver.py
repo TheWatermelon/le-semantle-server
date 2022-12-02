@@ -71,6 +71,7 @@ def addWordToList(word, list):
         if word['word'] == item['word']:
             return False
     list.append(word)
+    list[len(list)-1]['num']=len(list)
     return True
 
 
@@ -106,7 +107,9 @@ def hist():
 def new_game():
     game.game_over()
     resp = make_response("")
-    resp.set_cookie("words", "", expires=0)
+    resp.set_cookie("current", "", max_age=0)
+    resp.set_cookie("words", "", max_age=0)
+    resp.set_cookie("message", "", max_age=0)
     resp.headers['location'] = url_for('main_page')
     return resp, 302
 
@@ -115,9 +118,10 @@ def new_game():
 @app.route("/", methods=['GET', 'POST'])
 def main_page():
     form = WordForm(request.form)
-    error_msg = None
-    word_score = None
+    message = request.cookies.get("message")
+    word_score = request.cookies.get("current")
     words = []
+
     if request.cookies.get('words') is not None:
         words_string = request.cookies.get('words')
         words_string = words_string.replace("'", '"')
@@ -129,14 +133,23 @@ def main_page():
         addWordToList(word_score, words)
 
         resp = make_response("")
+        resp.set_cookie("current", f"{word_score}",max_age=3)
         resp.set_cookie("words", f"{words}")
+
+        if 'error' in word_score:
+            resp.set_cookie("message",word_score['error'],max_age=3)
+        elif word_score['percentile'] == 1000:
+            resp.set_cookie("message","Bravo ! Vous avez trouvé en "+str(len(words))+" coups ! <a href='/new'>Cliquez ici</a> pour obtenir un nouveau mot.")
+
         resp.headers['location'] = url_for('main_page')
         return resp, 302
         
     if words:
-        word_score = words[len(words)-1]
         words.sort(key=getScoreFrom, reverse=True)
+    if word_score is not None:
+        word_score = word_score.replace("'", '"')
+        word_score = json.loads(word_score)
 
-    resp = render_template('mainpage.html', form=form, words=words, current=word_score, msg=error_msg)
+    resp = render_template('mainpage.html', form=form, words=words, current=word_score, msg=message)
     
     return resp
