@@ -56,12 +56,22 @@ def convert_namedtuple_to_dict(nt):
 
 
 class WordForm(FlaskForm):
-    word = StringField('', validators=[DataRequired()], render_kw={'autofocus': True, 'style': 'width:200px;'})
-    submit = SubmitField('Envoyer', render_kw={})
+    word = StringField('', validators=[DataRequired()], render_kw={'autofocus': True, 'style': '', 'class': 'form-control'})
+    submit = SubmitField('Envoyer', render_kw={'class': 'btn btn-primary'})
 
 
 def getScoreFrom(elem):
     return elem['score']
+
+
+def addWordToList(word, list):
+    if 'error' in word:
+        return False
+    for item in list:
+        if word['word'] == item['word']:
+            return False
+    list.append(word)
+    return True
 
 
 # controller
@@ -75,11 +85,9 @@ def score():
     return result_dict
 
 
-@app.route('/nearby', methods=['POST'])
+@app.route('/nearby', methods=['GET'])
 def nearby():
-    form = request.form
-
-    result = game.nearby(form.get('word'))
+    result = game.nearby(request.args.get('word'))
 
     return result
 
@@ -118,8 +126,7 @@ def main_page():
     if request.method == 'POST':
         word_score = score()
 
-        if word_score not in words and 'error' not in word_score:
-            words.append(word_score)
+        addWordToList(word_score, words)
 
         resp = make_response("")
         resp.set_cookie("words", f"{words}")

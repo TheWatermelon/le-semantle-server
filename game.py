@@ -112,7 +112,7 @@ class Game:
         elif word == self.history[1][2]:
             result = self.top(word, 100)
         else:
-            result = ''
+            result = self.top(word, 10)
         return result
 
 
