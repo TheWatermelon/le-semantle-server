@@ -32,13 +32,11 @@
             -moz-animation-fill-mode:both; 
         }
 
-        .reveal {
-            animation: fadeIn 1.5s;
-        }
+        .hide { visibility: collapse; }
 
-        .expand-line {
-            animation: expandLine 1.5s;
-        }
+        .reveal { animation: fadeIn 1.5s; }
+
+        .expand-line { animation: expandLine 1.5s; }
 
         @-webkit-keyframes progressBar {
         0% { width: 0; }
@@ -88,13 +86,12 @@ Devine le mot
     <div class="row">
         <div class="col-md-10 col-lg-8 mx-lg-auto mx-md-auto">
 
-            <h1 class="pt-5 pb-2">Devine le mot !</h1>
+            <h1 class="pt-5 pb-2">Devinez le mot !</h1>
 
             <h3>TO-DO développement</h3>
             <ul>
-                <li>BUG: ancien mot avec nouvel index</li>
-                <li>Ne pas afficher le premier de la liste si c'est le current</li>
                 <li>Lien pour voir de l'aide (/nearby)</li>
+                <li>Afficher les stats du mot (température par pallier de percentile)</li>
                 <li>Afficher l'historique du jeu (/history, /stats)</li>
             </ul>
         </div>
@@ -189,7 +186,9 @@ Devine le mot
             {% for word in words %}
                 {% if current["word"] == word["word"] %}
                     {% set style_bold = "style=font-weight:bold;" %}
-                    {% if current["percentile"] > 0 %}
+                    {% if word == words[0] %}
+                        {% set expand_line = "hide" %}
+                    {% elif current["percentile"] > 0 %}
                         {% set expand_line = "expand-line" %}
                     {% endif %}
                 {% endif %}

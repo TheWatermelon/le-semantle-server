@@ -64,15 +64,14 @@ def getScoreFrom(elem):
     return elem['score']
 
 
-def addWordToList(word, list):
-    if 'error' in word:
-        return False
-    for item in list:
-        if word['word'] == item['word']:
-            return False
-    list.append(word)
-    list[len(list)-1]['num']=len(list)
-    return True
+def addWordToList(word, w_list):
+    if 'error' not in word:
+        for item in w_list:
+            if word['word'] == item['word']:
+                return item
+        word['num'] = len(w_list)+1
+        w_list.append(word)
+    return word
 
 
 # controller
@@ -134,8 +133,7 @@ def main_page():
 
     if request.method == 'POST':
         word_score = score()
-
-        addWordToList(word_score, words)
+        word_score = addWordToList(word_score, words)
 
         resp = make_response("")
         resp.set_cookie("current", f"{word_score}",max_age=3)
