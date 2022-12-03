@@ -39,6 +39,7 @@ class Game:
         # initialize global
         self.solvers = 0
         self.day_num = len(self.history)
+        self.words = {}
 
 
     def start(self):
@@ -124,6 +125,7 @@ class Game:
         self.history[0] = [self.day_num, self.solvers, self.word_to_guess]
         self.day_num += 1
         self.solvers = 0
+        self.words = {}
         self.history = [[self.day_num, 0, ''], *self.history]
         self.save_history()
         self.random_word()

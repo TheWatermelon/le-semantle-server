@@ -120,7 +120,12 @@ def main_page():
     form = WordForm(request.form)
     message = request.cookies.get("message")
     word_score = request.cookies.get("current")
-    words = []
+    
+    session_id = request.cookies.get("session")
+
+    if session_id not in game.words:
+        game.words[session_id] = []
+    words = game.words[session_id]
 
     if request.cookies.get('words') is not None:
         words_string = request.cookies.get('words')
@@ -134,7 +139,7 @@ def main_page():
 
         resp = make_response("")
         resp.set_cookie("current", f"{word_score}",max_age=3)
-        resp.set_cookie("words", f"{words}")
+        #resp.set_cookie("words", f"{words}")
 
         if 'error' in word_score:
             resp.set_cookie("message",word_score['error'],max_age=3)
@@ -143,7 +148,9 @@ def main_page():
 
         resp.headers['location'] = url_for('main_page')
         return resp, 302
-        
+
+    game.words[session_id] = words
+
     if words:
         words.sort(key=getScoreFrom, reverse=True)
     if word_score is not None:
