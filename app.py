@@ -5,12 +5,13 @@ import os
 import csv
 import json
 import logging
-from flask import Flask, request, render_template, make_response, flash, url_for, redirect
+from flask import Flask, request, render_template, make_response, flash, url_for, redirect, send_from_directory
 from flask_bootstrap import Bootstrap
 from flask_wtf import FlaskForm
 from wtforms import StringField, SubmitField
 from wtforms.validators import DataRequired
 from gensim.models import KeyedVectors
+from jinja2 import Environment, FileSystemLoader
 
 
 from environ import *
@@ -74,6 +75,26 @@ def addWordToList(word, w_list):
     return word
 
 
+@app.context_processor
+def utility_processor():
+    def getEmojiFor(percentile, score):
+        if percentile == 1000:
+            return "🥳"
+        elif percentile > 998:
+            return "😱"
+        elif percentile > 989:
+            return "🔥"
+        elif percentile > 899:
+            return "🥵"
+        elif percentile > 0:
+            return "😎"
+        elif score > 0:
+            return "🥶"
+        else:
+            return "🧊"
+    return dict(getEmojiFor=getEmojiFor)
+
+
 # controller
 @app.route('/score', methods=['POST'])
 def score():
@@ -114,6 +135,10 @@ def new_game():
 
 
 # vue
+@app.route("/favicon.ico")
+def favicon():
+    return send_from_directory(os.path.join(app.root_path,'static'), "favicon.ico", mimetype="image/vnd.microsoft.icon")
+
 @app.route("/", methods=['GET', 'POST'])
 def main_page():
     form = WordForm(request.form)
@@ -155,6 +180,15 @@ def main_page():
         word_score = word_score.replace("'", '"')
         word_score = json.loads(word_score)
 
-    resp = render_template('mainpage.html', form=form, words=words, current=word_score, msg=message)
+    # hints
+    nearby_words = game.nearby(game.word_to_guess)
+    hints = []
+
+    top_percentiles = [1,900,990,999,1000]
+    for w in nearby_words:
+        if w[1] in top_percentiles:
+            hints.append(w)
+
+    resp = render_template('mainpage.html', form=form, hints=hints, words=words, current=word_score, msg=message)
     
     return resp

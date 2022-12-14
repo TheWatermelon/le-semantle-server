@@ -6,6 +6,38 @@
 	<style>
 		body { background: #e8f1f9; }
 
+        #words_list {
+            padding-left: 10px;
+            width: 500px;
+        }
+
+        #form {
+            width: 500px;
+        }
+
+        .row {
+            margin: inherit;
+        }
+
+        .flex_container {
+            display: flex;
+            flex-direction: row-reverse;
+        }
+
+        .hints {
+            /*margin: auto;*/
+            padding: inherit;
+            padding-left: 10px;
+            width: auto;
+        }
+
+        .message {
+            padding: inherit;
+            width: fit-content;
+            border-radius: 3px;
+            border: 1px solid black;
+        }
+
         .meter { 
             height: 18px;
             position: relative;
@@ -71,12 +103,23 @@
         99% { visibility: collapse; }
         100% { visibility: visible; }
         }
+
+        @media(max-width:538px){
+            #words_list {
+                padding-left: 0px;
+                width: inherit;
+            }
+
+            #form {
+                width: inherit;
+            }
+        }
 	</style>
 {% endblock %}
 
 
 {% block title %}
-Devine le mot
+Devinez le mot !
 {% endblock %}
 
 
@@ -84,21 +127,58 @@ Devine le mot
 
 <div class="container">
     <div class="row">
-        <div class="col-md-10 col-lg-8 mx-lg-auto mx-md-auto">
-
-            <h1 class="pt-5 pb-2">Devinez le mot !</h1>
-
+        <div class="col-sm text-left">
+            <div class="row">
+                <div class="col">
+                    <img src="{{ url_for('static', filename='favicon.png') }}" style="max-width: 40px">
+                </div>
+                <div class="col">
+                    <h1 class="pt-5 pb-2 float-md-left">Devinez le mot !</h1>
+                </div>
+            </div>
             <h3>TO-DO développement</h3>
             <ul>
-                <li>Lien pour voir de l'aide (/nearby)</li>
-                <li>Afficher les stats du mot (température par pallier de percentile)</li>
+                <li>Afficher l'icone de singe devant le titre (comme dans le titre d'onglet)</li>
+                <li>Cachez les indices derrière des liens</li>
                 <li>Afficher l'historique du jeu (/history, /stats)</li>
             </ul>
         </div>
+        <div class="col">
+            <table class="table hints">
+                <thead>
+                    <tr>
+                        <th scope="col">‰</th>
+                        <th scope="col">🌡</th>
+                        <th scope="col">°C</th>
+                        <th scope="col">Indice</th>
+                    </tr>
+                </thead>
+                {% for h in hints %}
+                <tr>
+                    <td style="text-align:right">{{ h[1] }}</td>
+                    <td>{{ getEmojiFor(h[1],h[2]) }}</td>
+                    <td style="text-align:right">{{ '%0.2f'|format(h[2]|float) }}</td>
+                    <td>{{ h[0] }}</td>
+                </tr>
+                {% endfor %}
+                <tr>
+                    <td></td>
+                    <td>{{ getEmojiFor(0,0) }}</td>
+                    <td style="text-align:right">0.00</td>
+                    <td></td>
+                </tr>
+                <tr>
+                    <td></td>
+                    <td>{{ getEmojiFor(0,-1) }}</td>
+                    <td style="text-align:right">-100.00</td>
+                    <td></td>
+                </tr>
+            </table>
+        </div>
     </div>
-    {% if msg %}<p class="lead" style="padding:inherit;width:fit-content;border-radius:3px;border:1px solid black;">{{ msg|safe }}</p>{% endif %}
+    {% if msg %}<p class="lead message">{{ msg|safe }}</p>{% endif %}
     <div class="row">
-        <form action="" method="post" role="form" class="form" style="width: 500px;">
+        <form id="form" action="" method="post" role="form" class="form">
             <table class="table">
                 <tr>
                     <td>
@@ -124,7 +204,7 @@ Devine le mot
         </form>
     </div>
     <div class="row">     
-        <div class="col" style="padding-left: 10px; width: 500px;">
+        <div id="words_list" class="col">
         {% if words %}
             <table class="table">
                 <colgroup>
@@ -151,17 +231,7 @@ Devine le mot
                     <td>{{ current["word"] }}</td>
                 {% if current["percentile"] > 0 %}
                     <td class="reveal">{{ '%0.2f'|format(current["score"]*100|float) }}</td>
-                    {% if current["percentile"] == 1000 %}
-                    <td class="reveal">🥳</td>
-                    {% elif current["percentile"] > 998 %}
-                    <td class="reveal">😱</td>
-                    {% elif current["percentile"] > 989 %}
-                    <td class="reveal">🔥</td>
-                    {% elif current["percentile"] > 899 %}
-                    <td class="reveal">🥵</td>
-                    {% elif current["percentile"] > 0 %}
-                    <td class="reveal">😎</td>
-                    {% endif %}
+                    <td class="reveal">{{ getEmojiFor(current["percentile"],current["score"]) }}</td>
                     <td class="reveal">{{ current["percentile"] }}</td>
                     <td>
                         <div class="meter">
