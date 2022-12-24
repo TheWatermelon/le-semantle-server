@@ -28,16 +28,17 @@ jobs:
         registry: europe-west1-docker.pkg.dev
 
     - name: Build Docker Image
+      # https://stackoverflow.com/a/62251882
       shell: bash
       run: |-
         docker pull europe-west1-docker.pkg.dev/padok-training-lab/chap-semantle/le-semantle-server:latest
-        docker build -t europe-west1-docker.pkg.dev/padok-training-lab/chap-semantle/le-semantle-server:$GITHUB_SHA -t europe-west1-docker.pkg.dev/padok-training-lab/chap-semantle/le-semantle-server:latest .
+        docker build --format docker -t europe-west1-docker.pkg.dev/padok-training-lab/chap-semantle/le-semantle-server:$GITHUB_SHA -t europe-west1-docker.pkg.dev/padok-training-lab/chap-semantle/le-semantle-server:latest .
 
     - name: Push Docker Image to Artifact Registry
       shell: bash
       run: |-
-        docker push europe-west1-docker.pkg.dev/padok-training-lab/chap-semantle/le-semantle-server:latest
-        docker push europe-west1-docker.pkg.dev/padok-training-lab/chap-semantle/le-semantle-server:$GITHUB_SHA
+        docker push --remove-signatures europe-west1-docker.pkg.dev/padok-training-lab/chap-semantle/le-semantle-server:latest
+        docker push --remove-signatures europe-west1-docker.pkg.dev/padok-training-lab/chap-semantle/le-semantle-server:$GITHUB_SHA
 
     - id: 'deploy'
       name: 'Deploy on Cloud Run'
