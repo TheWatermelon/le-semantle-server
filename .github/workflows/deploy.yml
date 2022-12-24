@@ -1,52 +1,106 @@
-name: cloudrun-deploy
+# This workflow build and push a Docker container to Google Artifact Registry and deploy it on Cloud Run when a commit is pushed to the $default-branch branch
+#
+# Overview:
+#
+# 1. Authenticate to Google Cloud
+# 2. Authenticate Docker to Artifact Registry
+# 3. Build a docker container
+# 4. Publish it to Google Artifact Registry
+# 5. Deploy it to Cloud Run
+#
+# To configure this workflow:
+#
+# 1. Ensure the required Google Cloud APIs are enabled:
+#
+#    Cloud Run            run.googleapis.com
+#    Artifact Registry    artifactregistry.googleapis.com
+#
+# 2. Create and configure Workload Identity Federation for GitHub (https://github.com/google-github-actions/auth#setting-up-workload-identity-federation)
+#
+# 3. Ensure the required IAM permissions are granted
+#
+#    Cloud Run
+#      roles/run.admin
+#      roles/iam.serviceAccountUser     (to act as the Cloud Run runtime service account)
+#
+#    Artifact Registry
+#      roles/artifactregistry.admin     (project or repository level)
+#
+#    NOTE: You should always follow the principle of least privilege when assigning IAM roles
+#
+# 4. Create GitHub secrets for WIF_PROVIDER and WIF_SERVICE_ACCOUNT
+#
+# 5. Change the values for the GAR_LOCATION, SERVICE and REGION environment variables (below).
+#
+# NOTE: To use Google Container Registry instead, replace ${{ env.GAR_LOCATION }}-docker.pkg.dev with gcr.io
+#
+# For more support on how to run this workflow, please visit https://github.com/marketplace/actions/deploy-to-cloud-run
+#
+# Further reading:
+#   Cloud Run IAM permissions                 - https://cloud.google.com/run/docs/deploying
+#   Artifact Registry IAM permissions         - https://cloud.google.com/artifact-registry/docs/access-control#roles
+#   Container Registry vs Artifact Registry   - https://cloud.google.com/blog/products/application-development/understanding-artifact-registry-vs-container-registry
+#   Principle of least privilege              - https://cloud.google.com/blog/products/identity-security/dont-get-pwned-practicing-the-principle-of-least-privilege
+
+name: Build and Deploy to Cloud Run
+
 on:
   push:
     branches:
-      - main
+      - $default-branch
       - feat/actions
 
+env:
+  PROJECT_ID: padok-training-lab
+  GAR_LOCATION: europe-west1
+  REPOSITORY: chap-semantle
+  SERVICE: le-semantle-server
+  REGION: europe-north1
+
 jobs:
-  setup-build-publish-deploy:
-    runs-on: ubuntu-latest
+  deploy:
     permissions:
       contents: 'read'
       id-token: 'write'
 
+    runs-on: ubuntu-latest
     steps:
-    - uses: 'actions/checkout@v3'
+      - name: Checkout
+        uses: actions/checkout@v2
 
-    - id: 'auth'
-      name: 'Authenticate to Google Cloud'
-      uses: 'google-github-actions/auth@v1'
-      with:
-        credentials_json: ${{ secrets.CREDENTIALS_JSON }}
+      - name: Google Auth
+        id: auth
+        uses: 'google-github-actions/auth@v1'
+        with:
+          credentials_json: '${{ secrets.CREDENTIALS_JSON }}'
 
-    - name: Setup GCP SDK and Docker Client
-      uses: latrock/gcp-artifact-registry-auth@v0.1.1
-      with:
-        gcp-sa-creds-json: ${{ secrets.CREDENTIALS_JSON }}
-        registry: europe-west1-docker.pkg.dev
+      - name: Login to GCR
+        uses: docker/login-action@v2
+        with:
+          username: oauth2accesstoken
+          password: ${{ steps.auth.outputs.access_token }}
+          registry: '${{ env.GAR_LOCATION }}-docker.pkg.dev'
 
-    - name: Build Docker Image
-      # https://stackoverflow.com/a/62251882
-      shell: bash
-      run: |-
-        docker pull europe-west1-docker.pkg.dev/padok-training-lab/chap-semantle/le-semantle-server:latest
-        docker build --format docker -t europe-west1-docker.pkg.dev/padok-training-lab/chap-semantle/le-semantle-server:$GITHUB_SHA -t europe-west1-docker.pkg.dev/padok-training-lab/chap-semantle/le-semantle-server:latest .
+      - name: Build and Push Container
+        run: |-
+          docker build -t "${{ env.GAR_LOCATION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/${{ env.SERVICE }}:${{ github.sha }}" ./
+          docker push "${{ env.GAR_LOCATION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/${{ env.SERVICE }}:${{ github.sha }}"
 
-    - name: Push Docker Image to Artifact Registry
-      shell: bash
-      run: |-
-        docker push --remove-signatures europe-west1-docker.pkg.dev/padok-training-lab/chap-semantle/le-semantle-server:latest
-        docker push --remove-signatures europe-west1-docker.pkg.dev/padok-training-lab/chap-semantle/le-semantle-server:$GITHUB_SHA
+      # END - Docker auth and build
 
-    - id: 'deploy'
-      name: 'Deploy on Cloud Run'
-      uses: 'google-github-actions/deploy-cloudrun@v1'
-      with:
-        service: 'le-semantle-server'
-        image: europe-west1-docker.pkg.dev/padok-training-lab/chap-semantle/le-semantle-server:$GITHUB_SHA
-        region: europe-north1
+      - name: Deploy to Cloud Run
+        id: deploy
+        uses: google-github-actions/deploy-cloudrun@v0
+        with:
+          service: ${{ env.SERVICE }}
+          region: ${{ env.REGION }}
+          # NOTE: If using a pre-built image, update the image name here
+          image: ${{ env.GAR_LOCATION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/${{ env.SERVICE }}:${{ github.sha }}
+          # NOTE: You can also set env variables here:
+          #  env_vars: |
+          #  NODE_ENV=production
+          #  TOKEN_EXPIRE=6400
 
-    - name: 'Use output'
-      run: 'curl "${{ steps.deploy.outputs.url }}"'
+      # If required, use the Cloud Run url output in later steps
+      - name: Show Output
+        run: echo ${{ steps.deploy.outputs.url }}
