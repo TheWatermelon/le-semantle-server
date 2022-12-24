@@ -48,6 +48,9 @@ Bootstrap(app)
 
 app.config["JSONIFY_PRETTYPRINT_REGULAR"] = False
 
+# Access images in the static folder
+IMG_FOLDER = os.path.join('')
+
 if not app.debug or os.environ.get('WERKZEUG_RUN_MAIN') == 'true':
     game.start()
 

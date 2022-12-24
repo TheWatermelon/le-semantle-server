@@ -1,0 +1,122 @@
+body { background: #e8f1f9; }
+
+#header-div {
+    margin-top: 20px;
+    display: flex;
+    align-items: flex-end;
+}
+
+#header-text {
+    display: inline;
+    /* margin order: top right bottom left */
+    margin: 0px 0px 0px 20px;
+}
+
+#words_list {
+    padding-left: 10px;
+    width: 500px;
+}
+
+#form {
+    width: 500px;
+}
+
+.row {
+    margin: inherit;
+}
+
+.flex_container {
+    display: flex;
+    flex-direction: row-reverse;
+}
+
+.hints {
+    /*margin: auto;*/
+    padding: inherit;
+    padding-left: 10px;
+    width: auto;
+}
+
+.message {
+    padding: inherit;
+    width: fit-content;
+    border-radius: 3px;
+    border: 1px solid black;
+}
+
+.meter { 
+    height: 18px;
+    position: relative;
+    background: #f3efe6;
+    overflow: hidden;
+    border-radius: 5px;
+}
+
+.meter span {
+    display: block;
+    height: 100%;
+}
+
+.progress {
+    background-color: #e4c465;
+    text-align: center;
+}
+
+.progress-active {
+    background-color: #e4c465;
+    -webkit-animation: progressBar 1.5s ease-in-out;
+    -webkit-animation-fill-mode:both; 
+    -moz-animation: progressBar 1.5s ease-in-out;
+    -moz-animation-fill-mode:both; 
+}
+
+.hide { visibility: collapse; }
+
+.reveal { animation: fadeIn 1.5s; }
+
+.expand-line { animation: expandLine 1.5s; }
+
+@-webkit-keyframes progressBar {
+    0% { width: 0; }
+    100% { width: 100%; }
+}
+
+@-moz-keyframes progressBar {
+    0% { width: 0; }
+    100% { width: 100%; }
+}
+
+@-webkit-keyframes fadeIn {
+    0% { opacity: 0; }
+    99% { opacity: 0; }
+    100% { opacity: 100%; }
+}
+
+@-moz-keyframes fadeIn {
+    0% { opacity: 0; }
+    99% { opacity: 0; }
+    100% { opacity: 100%; }
+}
+
+@-webkit-keyframes expandLine {
+    0% { visibility: collapse; }
+    99% { visibility: collapse; }
+    100% { visibility: visible; }
+}
+
+@-moz-keyframes expandLine {
+    0% { visibility: collapse; }
+    99% { visibility: collapse; }
+    100% { visibility: visible; }
+}
+
+@media(max-width:538px){
+    #words_list {
+        padding-left: 0px;
+        width: inherit;
+    }
+
+    #form {
+        width: inherit;
+    }
+}
