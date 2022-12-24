@@ -22,11 +22,12 @@ jobs:
         credentials_json: ${{ secrets.CREDENTIALS_JSON }}
 
     - id: 'deploy'
-      name: 'Upload docker image'
+      name: 'Deploy on Cloud Run'
       uses: 'google-github-actions/deploy-cloudrun@v1'
       with:
         service: 'le-semantle-server'
         image: 'europe-west1-docker.pkg.dev/padok-training-lab/chap-semantle/le-semantle-server'
+        region: europe-north1
 
     - name: 'Use output'
       run: 'curl "${{ steps.deploy.outputs.url }}"'
