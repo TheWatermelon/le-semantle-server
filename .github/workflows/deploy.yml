@@ -21,15 +21,17 @@ jobs:
       with:
         credentials_json: ${{ secrets.CREDENTIALS_JSON }}
 
-    - name: Build Docker Image
-      shell: bash
-      run: docker build -t europe-west1-docker.pkg.dev/padok-training-lab/chap-semantle/le-semantle-server:$GITHUB_SHA -t europe-west1-docker.pkg.dev/padok-training-lab/chap-semantle/le-semantle-server:latest .
-
     - name: Setup GCP SDK and Docker Client
       uses: latrock/gcp-artifact-registry-auth@v0.1.1
       with:
         gcp-sa-creds-json: ${{ secrets.CREDENTIALS_JSON }}
         registry: europe-west1-docker.pkg.dev
+
+    - name: Build Docker Image
+      shell: bash
+      run: |-
+        docker pull europe-west1-docker.pkg.dev/padok-training-lab/chap-semantle/le-semantle-server:latest
+        docker build -t europe-west1-docker.pkg.dev/padok-training-lab/chap-semantle/le-semantle-server:$GITHUB_SHA -t europe-west1-docker.pkg.dev/padok-training-lab/chap-semantle/le-semantle-server:latest .
 
     - name: Push Docker Image to Artifact Registry
       shell: bash
@@ -42,7 +44,7 @@ jobs:
       uses: 'google-github-actions/deploy-cloudrun@v1'
       with:
         service: 'le-semantle-server'
-        image: 'europe-west1-docker.pkg.dev/padok-training-lab/chap-semantle/le-semantle-server:CI_COMMIT_SHA'
+        image: 'europe-west1-docker.pkg.dev/padok-training-lab/chap-semantle/le-semantle-server:$GITHUB_SHA'
         region: europe-north1
 
     - name: 'Use output'
